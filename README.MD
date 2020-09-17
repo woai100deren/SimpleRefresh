@@ -1,0 +1,1 @@
+继承LinearLayout自定义控件，包裹ListView，简单实现了下拉刷新。
