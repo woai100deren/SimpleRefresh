@@ -7,6 +7,10 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
+import android.view.animation.Animation;
+import android.view.animation.LinearInterpolator;
+import android.view.animation.RotateAnimation;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 
@@ -23,6 +27,10 @@ public class MyRefreshLayout extends LinearLayout implements View.OnTouchListene
      * 下拉头的View
      */
     private View header;
+    /**
+     * 三角形
+     */
+    private ImageView iv_triangle;
     /**
      * 是否已加载过一次layout，这里onLayout中的初始化只需加载一次
      */
@@ -86,6 +94,10 @@ public class MyRefreshLayout extends LinearLayout implements View.OnTouchListene
      * 下拉刷新的回调接口
      */
     private PullToRefreshListener mListener;
+
+    private float preDegres = 0;
+    private int preDistance = 0;
+
     public MyRefreshLayout(Context context) {
         super(context);
         init(context);
@@ -104,6 +116,7 @@ public class MyRefreshLayout extends LinearLayout implements View.OnTouchListene
     private void init(Context context){
         setOrientation(VERTICAL);
         header = LayoutInflater.from(context).inflate(R.layout.refresh_header, this, false);
+        iv_triangle = (ImageView) header.findViewById(R.id.iv_triangle);
         addView(header, 0);
         touchSlop = ViewConfiguration.get(context).getScaledTouchSlop();
     }
@@ -156,9 +169,9 @@ public class MyRefreshLayout extends LinearLayout implements View.OnTouchListene
                         // 通过偏移下拉头的topMargin值，来实现下拉效果，修改分母可以有不同的拉力效果
                         headerLayoutParams.topMargin = (int) ((distance / 2.8) + hideHeaderHeight);
                         header.setLayoutParams(headerLayoutParams);
-//                        //添加动画（这里是手指控制滑动的动画）、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、
-//                        rotateTriangle((distance - preDistance)/2);
-//                        preDistance=distance;
+                        //添加动画（这里是手指控制滑动的动画）、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、
+                        rotateTriangle((distance - preDistance)/2);
+                        preDistance=distance;
                     }
                     break;
                 case MotionEvent.ACTION_UP:
@@ -198,9 +211,8 @@ public class MyRefreshLayout extends LinearLayout implements View.OnTouchListene
             } else if (currentStatus == STATUS_RELEASE_TO_REFRESH) {  //释放状态
 
             } else if (currentStatus == STATUS_REFRESHING) {  //刷新中
-
-//                iv_triangle.clearAnimation();
-//                TriangelRotate();
+                iv_triangle.clearAnimation();
+                TriangelRotate();
             }
         }
     }
@@ -232,6 +244,32 @@ public class MyRefreshLayout extends LinearLayout implements View.OnTouchListene
             // 如果ListView中没有元素，也应该允许下拉刷新
             ableToPull = true;
         }
+    }
+
+    private void rotateTriangle(float angle) {
+        float pivotX = iv_triangle.getWidth() /2;
+        float pivotY = (float) (iv_triangle.getHeight() /1.6);
+        float fromDegrees = preDegres;
+        float toDegrees = angle;
+
+        RotateAnimation animation = new RotateAnimation(fromDegrees, toDegrees, pivotX, pivotY);
+        animation.setDuration(10);
+        animation.setFillAfter(true);
+        iv_triangle.startAnimation(animation);
+        preDegres = preDegres + angle;
+    }
+
+    private void TriangelRotate(){
+        float pivotX = iv_triangle.getWidth() /2;
+        float pivotY = (float) (iv_triangle.getHeight() /1.6);
+        RotateAnimation animation = new RotateAnimation(0f, 120f, pivotX, pivotY);
+        animation.setDuration(50);
+        animation.setRepeatMode(Animation.RESTART);
+        animation.setRepeatCount(Animation.INFINITE);
+        preDegres = 0;
+        LinearInterpolator linearInterpolator=new LinearInterpolator();
+        animation.setInterpolator(linearInterpolator);
+        iv_triangle.startAnimation(animation);
     }
 
     /**
@@ -274,7 +312,7 @@ public class MyRefreshLayout extends LinearLayout implements View.OnTouchListene
             header.setLayoutParams(headerLayoutParams);
             currentStatus = STATUS_REFRESH_FINISHED;
             //完成刷新、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、
-//            iv_triangle.clearAnimation();
+            iv_triangle.clearAnimation();
         }
     }
 
